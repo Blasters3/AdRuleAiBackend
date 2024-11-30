@@ -1,0 +1,33 @@
+How does YouTube develop new policies and update existing ones?
+Each of our policies is carefully thought through so that they are consistent, well-informed and can be applied to content from around the world. They're developed in consultation with a wide range of external industry and policy experts, as well as YouTube Creators. New policies go through multiple rounds of testing before they go live to ensure that our global team of content reviewers can apply them accurately and consistently.
+This work is never finished and we are always evaluating our policies to understand how we can better strike a balance between keeping the YouTube community protected and giving everyone a voice.
+
+How does YouTube enforce its Community Guidelines?
+500 hours of video are uploaded to YouTube every minute. That's a lot of content, which is why our teams come together to make sure that what you see on our platform follows our Community Guidelines. To do that, we combine the power of advanced machine learning systems and our community itself to flag potentially problematic content. Our machine learning systems and expert reviewers then remove flagged content that violates our Community Guidelines.
+
+How does YouTube identify content that violates the Community Guidelines?
+With hundreds of hours of new content uploaded to YouTube every minute, we use a combination of people and machine learning to detect problematic content at scale. Machine learning is well suited to detect patterns, which helps us to find content that is similar to other content that we've already removed, even before it's viewed.
+
+We also recognise that the best way to quickly remove content is to anticipate problems before they emerge. Our Intelligence Desk monitors the news, social media and user reports to detect new trends surrounding inappropriate content, and works to make sure that our teams are prepared to address them before they can become a larger issue.
+
+Is there a way for the broader community to flag harmful content?
+The YouTube community also plays an important role in flagging content they think is inappropriate.
+
+If you see content that you think violates the Community Guidelines, you can use our flagging feature to submit content for review.
+
+We developed the YouTube Trusted Flagger programm to provide robust content reporting processes to non-governmental organisations (NGOs) with expertise in a policy area and government agencies. Participants receive training on YouTube policies and have a direct path of communication with our Trust & Safety specialists. Videos flagged by Trusted Flaggers are not automatically removed. They are subject to the same human review as videos flagged by any other user, but we may expedite review by our teams. NGOs also receive occasional online training on YouTube policies.
+
+How does YouTube treat educational, documentary, scientific or artistic content?
+Sometimes videos that might otherwise violate our Community Guidelines may be allowed to stay on YouTube if the content offers a compelling reason with visible context for viewers. We often refer to this exception as 'EDSA', which stands for 'educational, documentary, scientific or artistic'. To help determine whether a video might qualify for an EDSA exception, we look at multiple factors, including the video title, descriptions and the context provided.
+
+EDSA exceptions are a critical way in which we make sure that important speech stays on YouTube, while protecting the wider YouTube ecosystem from harmful content.
+
+
+What action does YouTube take for content that violates the Community Guidelines?
+Machine-learning systems help us identify and remove spam automatically, as well as remove re-uploads of content that we've already reviewed and determined violates our policies. YouTube takes action on other flagged videos after review by trained human reviewers. They assess whether the content does indeed violate our policies, and protect content that has an educational, documentary, scientific or artistic purpose. Our reviewer teams remove content that violates our policies and age-restrict content that may not be appropriate for all audiences. Reviewers' inputs are then used to train and improve the accuracy of our systems on a much larger scale.
+
+Community Guidelines strikes
+If our reviewers decide that content violates our Community Guidelines, we remove the content and send a notice to the creator. The first time that a creator violates our Community Guidelines, they receive a warning with no penalty to the channel. After one warning, we'll issue a Community Guidelines strike to the channel and the account will have temporary restrictions including not being allowed to upload videos, live streams or stories for a one-week period. Channels that receive three strikes within a 90-day period will be terminated. Channels that are dedicated to violating our policies or that have a single case of severe abuse of the platform will bypass our strikes system and be terminated. All strikes and terminations can be appealed if the creator believes that there was an error, and our teams will re-review the decision.
+
+Age-restricting content
+Sometimes content doesn't violate our Community Guidelines but may not be appropriate for viewers under 18 years of age. In these cases, our review team will place an age restriction on the video so that it will not be visible to viewers under 18 years of age, logged-out users or to those who have Restricted mode enabled. Creators can also choose to age-restrict their own content at upload if they think that it's not suitable for younger audiences.

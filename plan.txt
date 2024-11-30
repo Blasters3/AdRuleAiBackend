@@ -1,0 +1,49 @@
+- Flask APIs to analyze ads(images, text, video, audio) against platform policies (TikTok, Instagram, etc.) given a text file with ad details 
+- user will upload a zip file with the ad assets and a text file  in the same zip file with the ad details
+- in text file, the ad details will be in the following format:
+    - Ad Name:
+    - Ad Description:
+    - Ad Category:
+    - Ad Targeting:
+    - Ad Message:
+    - Ad Image Names: (comma separated)
+- the function will first upload the zip file to S3
+- the function will then analyze all the ad assets in large batches using AWS Bedrock claude sonnet 3.5 model
+- the function will request the LLM to generate a report with the analysis and the ad details IN A SPECIFIED FORMAT
+- format example:
+    - Ad Details:
+        - Ad Name: 
+        - Ad Description:
+        - Ad Category:
+        - Ad Targeting:
+        - Ad Message:
+    - Ad Analysis:
+        - Image Analysis:
+        - Text Analysis:
+        - Video Analysis:
+        - Audio Analysis:
+    - Final Report:
+        - Ad Details:
+        - Ad Analysis:
+        - Ad Compliance:
+        - Ad Status:
+    - What to do if the ad is not compliant:
+        - Fix the ad  (suggest changes)
+            - On calling other api to fix the ad, the function will fix ads and then analyze the fixed ad and return a new report
+        - Explain why the ad is not compliant
+        - Suggest changes to the ad
+        - Suggest alternative ads
+
+- the function will return the report to the user
+
+
+- frontend plan
+   - there will be one intro page with airule ai logo and name and description with try now button
+   - after clicking try now, the user will be redirected to the upload page
+   - upload page will have a text box to enter the ad details and a upload button
+   - after uploading the zip file, the user will be redirected to the report page
+   - report page will have the report
+   - report page will have a button to download the report
+   - report page will have a button to download the fixed ad
+   - report page will have a button to go back to the upload page
+   - report page will have a button to go back to the intro page
