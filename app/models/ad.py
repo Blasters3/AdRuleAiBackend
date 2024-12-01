@@ -15,6 +15,7 @@ class Ad(db.Model):
     batch_count = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    batch_folder = db.Column(db.String(255))
     
     # Relationships
     assets = db.relationship('AdAsset', backref='ad', lazy=True) 

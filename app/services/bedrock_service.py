@@ -223,4 +223,104 @@ Please provide:
         
         except Exception as e:
             print("Error fixing ad with Bedrock:", str(e))
-            raise Exception(f"Error fixing ad with Bedrock: {str(e)}") 
+            raise Exception(f"Error fixing ad with Bedrock: {str(e)}")
+
+    def create_batch_job(self, batch_data, job_name):
+        """
+        Create a batch processing job in Bedrock
+        """
+        try:
+            # Create JSONL content for batch processing
+            jsonl_content = self._prepare_batch_jsonl(batch_data)
+            
+            # Upload JSONL to S3
+            input_s3_key = f"batch-inputs/{job_name}.jsonl"
+            self.s3_service.upload_string_to_s3(jsonl_content, input_s3_key)
+            
+            input_data_config = {
+                "s3InputDataConfig": {
+                    "s3Uri": f"s3://{self.s3_service.bucket}/{input_s3_key}"
+                }
+            }
+            
+            output_data_config = {
+                "s3OutputDataConfig": {
+                    "s3Uri": f"s3://{self.s3_service.bucket}/batch-outputs/{job_name}/"
+                }
+            }
+            
+            response = self.bedrock_client.create_model_invocation_job(
+                roleArn=Config.BEDROCK_BATCH_ROLE_ARN,
+                modelId="anthropic.claude-3-haiku-20240307-v1:0",
+                jobName=job_name,
+                inputDataConfig=input_data_config,
+                outputDataConfig=output_data_config
+            )
+            
+            return response.get('jobArn')
+            
+        except Exception as e:
+            print(f"Error creating batch job: {str(e)}")
+            raise Exception(f"Error creating batch job: {str(e)}")
+
+    def _prepare_batch_jsonl(self, batch_data):
+        """
+        Prepare JSONL content for batch processing
+        """
+        jsonl_lines = []
+        for folder_data in batch_data:
+            prompt = self._create_analysis_prompt(
+                ad_details=folder_data['ad_details'],
+                images_data=folder_data['images_data']
+            )
+            jsonl_lines.append(json.dumps({
+                "prompt": prompt,
+                "folder": folder_data['folder'],
+                "ad_id": folder_data['ad_id']
+            }))
+        
+        return '\n'.join(jsonl_lines)
+
+    def get_batch_job_status(self, job_arn):
+        """
+        Get the status of a batch processing job
+        """
+        try:
+            response = self.bedrock_client.get_model_invocation_job(
+                jobIdentifier=job_arn
+            )
+            return {
+                'status': response['status'],
+                'startTime': response.get('startTime'),
+                'endTime': response.get('endTime'),
+                'failureReason': response.get('failureReason')
+            }
+        except Exception as e:
+            print(f"Error getting batch job status: {str(e)}")
+            raise Exception(f"Error getting batch job status: {str(e)}")
+
+    def get_batch_results(self, job_name):
+        """
+        Get results from a completed batch job
+        """
+        try:
+            output_prefix = f"batch-outputs/{job_name}/"
+            results = self.s3_service.list_and_read_s3_files(output_prefix)
+            
+            processed_results = []
+            for result in results:
+                try:
+                    result_data = json.loads(result)
+                    processed_results.append({
+                        'folder': result_data.get('folder'),
+                        'ad_id': result_data.get('ad_id'),
+                        'analysis': result_data.get('analysis')
+                    })
+                except json.JSONDecodeError:
+                    continue
+                
+            return processed_results
+            
+        except Exception as e:
+            print(f"Error getting batch results: {str(e)}")
+            raise Exception(f"Error getting batch results: {str(e)}")

@@ -25,3 +25,5 @@ class Config:
     CORS_HEADERS = 'Content-Type'
     CORS_ORIGINS = ['http://127.0.0.1:5173']  # Add your frontend URL
     CORS_SUPPORTS_CREDENTIALS = True
+    
+    BEDROCK_BATCH_ROLE_ARN = "arn:aws:iam::123456789012:role/bedrock-batch-role"

@@ -79,3 +79,47 @@ class S3Service:
         except Exception as e:
             print(f"Error getting base64 image from S3: {str(e)}")
             raise Exception(f"Error getting base64 image from S3: {str(e)}")
+
+    def extract_batch_zip_contents(self, zip_file):
+        """
+        Extract contents of a zip file containing multiple folders
+        Returns a dictionary with folder names as keys and their files data as values
+        """
+        batch_folders = {}
+        
+        with zipfile.ZipFile(zip_file) as zip_ref:
+            file_list = zip_ref.namelist()
+            
+            # Group files by their parent folders
+            for file_path in file_list:
+                # Skip directories and hidden files
+                if file_path.endswith('/') or file_path.startswith('__MACOSX'):
+                    continue
+                    
+                # Get the folder name (first part of the path)
+                folder_name = file_path.split('/')[0]
+                filename = os.path.basename(file_path)
+                
+                if folder_name not in batch_folders:
+                    batch_folders[folder_name] = {}
+                
+                # Extract and upload file
+                file_content = zip_ref.read(file_path)
+                s3_url = self.upload_file_to_s3(file_content, filename)
+                
+                batch_folders[folder_name][filename] = {
+                    's3_url': s3_url,
+                    'content': file_content if filename.endswith('.txt') else None
+                }
+        
+        return batch_folders
+
+    def download_file(self, s3_url):
+        try:
+            bucket_name = s3_url.split('/')[2]
+            key = '/'.join(s3_url.split('/')[3:])
+            response = self.s3_client.get_object(Bucket=bucket_name, Key=key)
+            return response['Body'].read()
+        except Exception as e:
+            print(f"Error downloading file from S3: {str(e)}")
+            raise
