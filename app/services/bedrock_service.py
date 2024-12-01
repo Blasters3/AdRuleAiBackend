@@ -20,97 +20,164 @@ class BedrockService:
 
     def analyze_ad(self, ad_details, images_data=None, video_data=None, audio_data=None):
         """Analyze ad content using Claude"""
-        print("Images data:", images_data)
-        print("Video data:", video_data)
-        print("Audio data:", audio_data)
-        prompt = self._construct_analysis_prompt(ad_details, images_data, video_data, audio_data)
-        # print("Prompt:", prompt)
-        print("hello")
-        print("Model ID:", self.model_id)
+        
+        # Convert S3 URLs to base64 if needed
+        if images_data and isinstance(images_data, str) and images_data.startswith('s3://'):
+            s3_service = S3Service()
+            images_data = s3_service.get_base64_image(images_data)
+        elif images_data and isinstance(images_data, list):
+            s3_service = S3Service()
+            processed_images = []
+            for image in images_data:
+                if isinstance(image, str) and image.startswith('s3://'):
+                    processed_images.append(s3_service.get_base64_image(image))
+                else:
+                    processed_images.append(image)
+            images_data = processed_images
+
+        messages = self._construct_analysis_messages(ad_details, images_data, video_data, audio_data)
+        
         try:
             response = self.bedrock.invoke_model(
                 modelId=self.model_id,
+                contentType="application/json",
+                accept="application/json",
                 body=json.dumps({
                     "anthropic_version": "bedrock-2023-05-31",
                     "max_tokens": 4096,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ]
+                    "messages": messages
                 })
             )
             
             response_body = json.loads(response.get('body').read())
             print("Response body:", response_body)
-            return response_body['content'][0]['text']
+            
+            return response_body
+            
+            # Parse the response text as JSON
+            # try:
+            #     analysis_result = json.loads(response_body['content'][0]['text'])
+            #     return analysis_result
+            # except json.JSONDecodeError as e:
+            #     print("Error parsing JSON response:", str(e))
+            #     return response_body['content'][0]['text']
         
         except Exception as e:
             print("Error analyzing ad with Bedrock:", str(e))
             raise Exception(f"Error analyzing ad with Bedrock: {str(e)}")
 
-    def _construct_analysis_prompt(self, ad_details, images_data=None, video_data=None, audio_data=None):
-        """Construct the prompt for ad analysis"""
-        prompt = f"""Please analyze this advertisement against platform policies and provide a detailed report.
+    def _construct_analysis_messages(self, ad_details, images_data=None, video_data=None, audio_data=None):
+        """Construct the messages array for ad analysis"""
+        message_content = []
+        
+        # Add images if present
+        if images_data:
+            print("Processing images data...")
+            images_list = images_data if isinstance(images_data, list) else [images_data]
+            for image_data in images_list:
+                print(f"Image data type: {type(image_data)}")
+                print(f"Image data length: {len(image_data) if image_data else 'None'}")
+                
+                # Ensure the base64 string doesn't include any header
+                if isinstance(image_data, str) and 'base64,' in image_data:
+                    image_data = image_data.split('base64,')[1]
+                
+                message_content.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/jpeg",
+                        "data": image_data
+                    }
+                })
+                print("Added image to message content")
+
+        # Add the main prompt text
+        prompt_text = f"""Please analyze this advertisement against platform policies and provide a detailed report in JSON format.
 
 Ad Details:
 {ad_details}
 
-Your task is to:
-1. Analyze all ad components (text, images, video, audio) for policy compliance
-2. Generate a comprehensive report in the following format:
+Your task is to analyze all ad components (text, images, video, audio) for policy compliance and return a JSON response in the following format:
 
-Ad Details:
-- Ad Name:
-- Ad Description:
-- Ad Category:
-- Ad Targeting:
-- Ad Message:
+{{
+    "ad_details": {{
+        "name": "string",
+        "description": "string",
+        "category": "string",
+        "targeting": "string",
+        "message": "string"
+    }},
+    "analysis": {{
+        "image_analysis": {{
+            "description": "string",
+            "concerns": ["string"],
+            "compliant": boolean
+        }},
+        "text_analysis": {{
+            "description": "string",
+            "concerns": ["string"],
+            "compliant": boolean
+        }}
+    }},
+    "compliance": {{
+        "status": "compliant|non_compliant|needs_review",
+        "issues": [
+            {{
+                "type": "string",
+                "description": "string",
+                "severity": "high|medium|low"
+            }}
+        ],
+        "recommendations": [
+            {{
+                "type": "fix|change|alternative",
+                "description": "string"
+            }}
+        ]
+    }},
+    "overall_status": {{
+        "is_approved": boolean,
+        "confidence_score": float,
+        "review_needed": boolean,
+        "rejection_reasons": ["string"]
+    }}
+}}
 
-Ad Analysis:
-- Image Analysis:
-- Text Analysis:
-- Video Analysis:
-- Audio Analysis:
+Please ensure:
+1. All JSON fields are properly formatted
+2. Boolean values are true/false (not strings)
+3. Numbers are numeric (not strings)
+4. Arrays are used for multiple items
+5. Nested objects are used for structured data
 
-Final Report:
-- Ad Details:
-- Ad Analysis:
-- Ad Compliance:
-- Ad Status:
-
-What to do if the ad is not compliant:
-- Fix the ad (suggest specific changes)
-- Explain why the ad is not compliant
-- Suggest changes to the ad
-- Suggest alternative ads
-
-Please be specific and detailed in your analysis, focusing on:
+Focus your analysis on:
 - Platform policy compliance
 - Content appropriateness
 - Target audience alignment
 - Brand safety
 - Regulatory compliance
 
-"""
-        if images_data:
-            prompt += f"\nImages for analysis: {images_data}"
-        if video_data:
-            prompt += f"\nVideo for analysis: {video_data}"
-        if audio_data:
-            prompt += f"\nAudio for analysis: {audio_data}"
-            
-        s3_service = S3Service()
-        guidelines_file_url_list = s3_service.get_guidelines_file_url_list()
-        # for url in guidelines_file_url_list:
-        #     prompt += f"\nGuidelines for analysis: {url}"
+Return only valid JSON without any additional text or explanation."""
 
-        return prompt
+        message_content.append({
+            "type": "text",
+            "text": prompt_text
+        })
+
+        # Print the final message content for debugging
+        print("Final message content structure:", json.dumps(message_content, indent=2))
+
+        return [{
+            "role": "user",
+            "content": message_content
+        }]
 
     def fix_ad(self, original_analysis, ad_content):
         """Fix non-compliant ads based on the original analysis"""
-        prompt = f"""Based on the following analysis, please fix this advertisement to make it compliant:
+        message_content = {
+            "type": "text",
+            "text": f"""Based on the following analysis, please fix this advertisement to make it compliant:
 
 Original Analysis:
 {original_analysis}
@@ -123,18 +190,20 @@ Please provide:
 2. New ad content
 3. Analysis of the fixed ad
 """
+        }
+
         try:
             response = self.bedrock.invoke_model(
                 modelId=self.model_id,
+                contentType="application/json",
+                accept="application/json",
                 body=json.dumps({
                     "anthropic_version": "bedrock-2023-05-31",
                     "max_tokens": 4096,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ]
+                    "messages": [{
+                        "role": "user",
+                        "content": [message_content]
+                    }]
                 })
             )
             

@@ -58,6 +58,8 @@ def analyze_ad():
             ad_details=ad_details,
             images_data=images_data
         )
+        
+        print(analysis_result, "analysis result", type(analysis_result))
 
         return jsonify({
             'status': 'success',

@@ -3,6 +3,7 @@ from app.config import Config
 import zipfile
 import io
 import os
+import base64
 
 class S3Service:
     def __init__(self):
@@ -57,3 +58,24 @@ class S3Service:
     def get_guidelines_file_url_list(self):
         """Get the URL list of the guidelines file"""
         return ["s3://airuleasset/guidelines/facebook.txt", "s3://airuleasset/guidelines/instagram.txt", "s3://airuleasset/guidelines/youtube.txt"]
+
+    def get_base64_image(self, s3_url):
+        """Download image from S3 and convert to base64"""
+        try:
+            # Parse bucket and key from s3:// URL
+            path_parts = s3_url.replace('s3://', '').split('/')
+            bucket = path_parts[0]
+            key = '/'.join(path_parts[1:])
+            
+            # Download the image from S3
+            response = self.s3_client.get_object(Bucket=bucket, Key=key)
+            image_data = response['Body'].read()
+            
+            # Convert to base64
+            base64_data = base64.b64encode(image_data).decode('utf-8')
+            
+            return base64_data
+            
+        except Exception as e:
+            print(f"Error getting base64 image from S3: {str(e)}")
+            raise Exception(f"Error getting base64 image from S3: {str(e)}")
