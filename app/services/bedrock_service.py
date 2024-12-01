@@ -3,6 +3,9 @@ import json
 from app.config import Config
 import base64
 from app.services.s3_service import S3Service
+from app.services.db_service import DBService
+from app.models.ad import Ad
+from app.models.ad_asset import AdAsset
 
 class BedrockService:
     def __init__(self):
@@ -17,6 +20,17 @@ class BedrockService:
         # Create Bedrock client using the session
         self.bedrock = self.session.client(service_name='bedrock-runtime')
         self.model_id = Config.BEDROCK_MODEL_ID
+        self.s3_service = S3Service()
+        self.db_service = DBService()
+
+    def get_platform_guidelines(self, platform):
+        """Fetch platform-specific guidelines from S3"""
+        guideline_path = f"s3://airuleasset/guidelines/{platform.lower()}.txt"
+        try:
+            return self.s3_service.get_file_content(guideline_path)
+        except Exception as e:
+            print(f"Error fetching guidelines for {platform}: {str(e)}")
+            return ""
 
     def analyze_ad(self, ad_details, images_data=None, video_data=None, audio_data=None):
         """Analyze ad content using Claude"""
@@ -35,7 +49,11 @@ class BedrockService:
                     processed_images.append(image)
             images_data = processed_images
 
-        messages = self._construct_analysis_messages(ad_details, images_data, video_data, audio_data)
+        # Get platform guidelines
+        platform = ad_details['platform'] if 'platform' in ad_details else 'facebook' # Default to Facebook if not specified
+        guidelines = self.get_platform_guidelines(platform)
+
+        messages = self._construct_analysis_messages(ad_details, guidelines, images_data, video_data, audio_data)
         
         try:
             response = self.bedrock.invoke_model(
@@ -50,23 +68,15 @@ class BedrockService:
             )
             
             response_body = json.loads(response.get('body').read())
-            print("Response body:", response_body)
+            analysis_result = json.loads(response_body['content'][0]['text'])
+                        
+            return analysis_result
             
-            return response_body
-            
-            # Parse the response text as JSON
-            # try:
-            #     analysis_result = json.loads(response_body['content'][0]['text'])
-            #     return analysis_result
-            # except json.JSONDecodeError as e:
-            #     print("Error parsing JSON response:", str(e))
-            #     return response_body['content'][0]['text']
-        
         except Exception as e:
             print("Error analyzing ad with Bedrock:", str(e))
             raise Exception(f"Error analyzing ad with Bedrock: {str(e)}")
 
-    def _construct_analysis_messages(self, ad_details, images_data=None, video_data=None, audio_data=None):
+    def _construct_analysis_messages(self, ad_details, guidelines, images_data=None, video_data=None, audio_data=None):
         """Construct the messages array for ad analysis"""
         message_content = []
         

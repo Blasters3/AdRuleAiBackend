@@ -16,3 +16,12 @@ class Config:
     # File settings
     ALLOWED_EXTENSIONS = {'zip'}
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max file size
+    
+    # SQLite Database settings
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///users.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # CORS settings
+    CORS_HEADERS = 'Content-Type'
+    CORS_ORIGINS = ['http://127.0.0.1:5173']  # Add your frontend URL
+    CORS_SUPPORTS_CREDENTIALS = True

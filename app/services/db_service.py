@@ -1,26 +1,64 @@
 from app import db
-from app.models.image_data import ImageData
+from app.models.ad_asset import AdAsset
+from app.models.ad import Ad
 
-class DatabaseService:
+class DBService:
     @staticmethod
-    def save_image_data(filename, s3_path, analysis_result):
+    def save_to_db(item):
+        """
+        Save an item to the database
+        """
         try:
-            image_data = ImageData(
-                filename=filename,
-                s3_path=s3_path,
-                analysis_result=analysis_result
-            )
-            db.session.add(image_data)
+            db.session.add(item)
             db.session.commit()
-            return image_data
+            return True
         except Exception as e:
             db.session.rollback()
-            raise Exception(f"Failed to save to database: {str(e)}")
+            print(f"Error saving to database: {str(e)}")
+            return False
 
     @staticmethod
-    def generate_report():
+    def delete_from_db(item):
+        """
+        Delete an item from the database
+        """
         try:
-            images = ImageData.query.all()
-            return [image.to_dict() for image in images]
+            db.session.delete(item)
+            db.session.commit()
+            return True
         except Exception as e:
-            raise Exception(f"Failed to generate report: {str(e)}") 
+            db.session.rollback()
+            print(f"Error deleting from database: {str(e)}")
+            return False
+
+    @staticmethod
+    def get_ad_asset_by_id(asset_id):
+        """
+        Get an ad asset by its ID
+        """
+        return AdAsset.query.get(asset_id)
+
+    @staticmethod
+    def get_ad_by_id(ad_id):
+        """
+        Get an ad by its ID
+        """
+        return Ad.query.get(ad_id)
+
+    @staticmethod
+    def update_ad_asset(asset_id, updates):
+        """
+        Update an ad asset with the given updates
+        """
+        try:
+            asset = AdAsset.query.get(asset_id)
+            if asset:
+                for key, value in updates.items():
+                    setattr(asset, key, value)
+                db.session.commit()
+                return True
+            return False
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error updating ad asset: {str(e)}")
+            return False 
